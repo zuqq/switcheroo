@@ -1,0 +1,3 @@
+module _switcheroo {
+    header "_switcheroo.h"
+}
