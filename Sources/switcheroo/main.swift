@@ -128,8 +128,8 @@ public struct DeviceSelector: Decodable, Equatable, Hashable {
 }
 
 public struct Rules: Decodable, Equatable {
-    var inputSource: String?
-    var naturalScroll: Bool?
+    let inputSource: String?
+    let naturalScroll: Bool?
 
     public init(inputSource: String?, naturalScroll: Bool?) {
         self.inputSource = inputSource
