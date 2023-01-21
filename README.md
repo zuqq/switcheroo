@@ -8,7 +8,7 @@ disconnected.
 
 Using Homebrew:
 
-```
+```bash
 brew install zuqq/tap/switcheroo
 brew services start zuqq/tap/switcheroo
 ```
@@ -47,7 +47,7 @@ In order to determine possible values for the keys `"selector"` and
 Switcheroo uses Swift's built-in `Logger` type for debug logging. You can view
 its output in `Console.app`,[^1] or by running the following command:
 
-```
+```bash
 log stream --level debug --predicate 'subsystem == "switcheroo"'
 ```
 
