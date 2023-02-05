@@ -244,7 +244,6 @@ public struct Overrides {
 
 class Switcheroo {
     private let queue = DispatchQueue(label: "switcheroo")
-    private let shutdownSource: DispatchSourceSignal
     private let inputSources: [String: TISInputSource]
     private let inputSourceDefault: TISInputSource
     private let naturalScrollDefault: Bool
@@ -256,12 +255,6 @@ class Switcheroo {
         naturalScrollDefault = NaturalScroll.get()
         overrides = Overrides(configuration)
         try configuration.validate(Set(inputSources.keys))
-        shutdownSource = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
-        shutdownSource.setEventHandler {
-            self.queueShutdown()
-        }
-        shutdownSource.resume()
-        signal(SIGTERM, SIG_IGN)
     }
 
     private func update() {
@@ -449,6 +442,18 @@ struct SwitcherooCommand: ParsableCommand {
         let configurationFile = defaultConfigurationFile()
         let configuration = try decodeConfigurationFile(readConfigurationFile(configurationFile))
         let switcheroo = try Switcheroo(configuration)
+
+        var shutdownSources: [DispatchSourceSignal] = []
+        for signalNumber in [SIGINT, SIGTERM] {
+            let shutdownSource = DispatchSource.makeSignalSource(signal: signalNumber, queue: .main)
+            shutdownSources.append(shutdownSource)
+            shutdownSource.setEventHandler {
+                switcheroo.queueShutdown()
+            }
+            shutdownSource.resume()
+            signal(signalNumber, SIG_IGN)
+        }
+
         let switcherooPointer = Unmanaged.passUnretained(switcheroo).toOpaque()
         let manager = createDeviceManager()
         IOHIDManagerRegisterDeviceMatchingCallback(manager, onDeviceMatching, switcherooPointer)
