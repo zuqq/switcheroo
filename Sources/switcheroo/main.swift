@@ -256,12 +256,12 @@ class Switcheroo {
         naturalScrollDefault = NaturalScroll.get()
         overrides = Overrides(configuration)
         try configuration.validate(Set(inputSources.keys))
-        signal(SIGTERM, SIG_IGN)
         shutdownSource = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
         shutdownSource.setEventHandler {
             self.queueShutdown()
         }
         shutdownSource.resume()
+        signal(SIGTERM, SIG_IGN)
     }
 
     private func update() {
