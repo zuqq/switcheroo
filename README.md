@@ -17,8 +17,8 @@ Alternatively, clone this Git repository and run `swift build`.
 
 ## Example
 
-Switcheroo's configuration resides at `~/.switcheroo.json`, and follows a
-simple JSON-based file format. For example, here is a configuration file with a
+Switcheroo's configuration file resides at `~/.switcheroo.json` and adheres to a
+simple, JSON-based format. For example, here is a configuration file with a
 single entry that automatically switches to a US keyboard layout and no natural
 scrolling if a device with the name `"HHKB-Classic"` is connected:
 
@@ -39,8 +39,12 @@ scrolling if a device with the name `"HHKB-Classic"` is connected:
 Such a configuration file may have multiple entries, in which case later
 entries take precedence over earlier ones.
 
-In order to determine possible values for the keys `"selector"` and
-`"input_source"`, run `switcheroo list-devices` and `switcheroo list-input-sources`.
+Run `switcheroo list-devices` and `switcheroo list-input-sources` to determine
+possible values for the keys `"selector"` and `"input_source"`.
+
+Note that Switcheroo reads in its configuration file only once, right when it
+starts up. To check that you have configured Switcheroo to its liking, run the
+`switcheroo` command and wait for "Entering main loop." to appear in its output.
 
 ## Troubleshooting
 
