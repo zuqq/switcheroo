@@ -434,7 +434,7 @@ public func decodeConfigurationFile(_ data: Data) throws -> Configuration {
 }
 
 struct SwitcherooCommand: ParsableCommand {
-    static var configuration = CommandConfiguration(
+    static let configuration = CommandConfiguration(
         subcommands: [
             ListDevices.self,
             ListInputSources.self,
