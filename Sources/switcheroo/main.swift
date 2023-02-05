@@ -440,7 +440,9 @@ struct SwitcherooCommand: ParsableCommand {
 
     func run() throws {
         let configurationFile = defaultConfigurationFile()
+        print("Using configuration file: \(configurationFile)")
         let configuration = try decodeConfigurationFile(readConfigurationFile(configurationFile))
+        print("Successfully decoded configuration file.")
         let switcheroo = try Switcheroo(configuration)
 
         var shutdownSources: [DispatchSourceSignal] = []
@@ -459,7 +461,7 @@ struct SwitcherooCommand: ParsableCommand {
         IOHIDManagerRegisterDeviceMatchingCallback(manager, onDeviceMatching, switcherooPointer)
         IOHIDManagerRegisterDeviceRemovalCallback(manager, onDeviceRemoved, switcherooPointer)
         IOHIDManagerScheduleWithRunLoop(manager, CFRunLoopGetCurrent(), CFRunLoopMode.defaultMode.rawValue)
-        logger.debug("Entering main loop.")
+        print("Entering main loop.")
         RunLoop.current.run()
     }
 }
