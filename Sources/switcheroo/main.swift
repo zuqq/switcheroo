@@ -67,7 +67,7 @@ func createDeviceManager() -> IOHIDManager {
         kIOHIDTransportKey: kIOHIDTransportUSBValue,
         kIOHIDPrimaryUsagePageKey: kHIDPage_GenericDesktop,
         kIOHIDPrimaryUsageKey: kHIDUsage_GD_Keyboard
-    ] as CFDictionary
+    ] as [String: Any] as CFDictionary
     IOHIDManagerSetDeviceMatching(manager, filter)
     return manager
 }
@@ -90,7 +90,7 @@ func getInputSources() throws -> [String: TISInputSource] {
     let filter = [
         kTISPropertyInputSourceIsEnableCapable: true,
         kTISPropertyInputSourceCategory: kTISCategoryKeyboardInputSource!
-    ] as CFDictionary
+    ] as [CFString?: Any] as CFDictionary
     guard let inputSources = TISCreateInputSourceList(filter, false).takeRetainedValue() as? [TISInputSource] else {
         throw SwitcherooError.failedToRetrieveInputSources
     }
