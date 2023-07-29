@@ -7,6 +7,9 @@ import IOKit.hid
 import os
 import _switcheroo
 
+// This is static so that it can be used in callbacks passed to unmanaged code.
+let logger = Logger(subsystem: "switcheroo", category: "main")
+
 enum SwitcherooError: CustomStringConvertible, Error {
     case failedToOpenConfigurationFile(String)
     case failedToReadConfigurationFile(String)
@@ -34,28 +37,6 @@ enum SwitcherooError: CustomStringConvertible, Error {
             return "Invalid setting for natural scroll (only `false` and `true` are valid): \(desired)"
         }
     }
-}
-
-// This is static so that it can be used in callbacks passed to unmanaged code.
-let logger = Logger(subsystem: "switcheroo", category: "main")
-
-let naturalScrollKey = "com.apple.swipescrolldirection" as CFString
-
-let naturalScrollNotification = NSNotification.Name("SwipeScrollDirectionDidChangeNotification")
-
-func getNaturalScroll() -> Bool {
-    // I wasn't able to find a getter corresponding to the `CGSSetSwipeScrollDirection` setter,
-    // so let's just read the value from `System Preferences.app` and hope that it has a correct
-    // view of the world.
-    return CFPreferencesGetAppBooleanValue(naturalScrollKey, kCFPreferencesAnyApplication, nil)
-}
-
-func setNaturalScroll(_ naturalScroll: Bool) {
-    let connection = _CGSDefaultConnection()
-    CGSSetSwipeScrollDirection(connection, naturalScroll);
-    CFPreferencesSetAppValue(naturalScrollKey, naturalScroll as CFBoolean, kCFPreferencesAnyApplication);
-    CFPreferencesAppSynchronize(kCFPreferencesAnyApplication);
-    DistributedNotificationCenter.default().postNotificationName(naturalScrollNotification, object: nil)
 }
 
 func createDeviceManager() -> IOHIDManager {
@@ -107,6 +88,25 @@ func getActiveInputSource() -> TISInputSource {
 
 func setInputSource(_ source: TISInputSource) {
     TISSelectInputSource(source)
+}
+
+let naturalScrollKey = "com.apple.swipescrolldirection" as CFString
+
+let naturalScrollNotification = NSNotification.Name("SwipeScrollDirectionDidChangeNotification")
+
+func getNaturalScroll() -> Bool {
+    // I wasn't able to find a getter corresponding to the `CGSSetSwipeScrollDirection` setter,
+    // so let's just read the value from `System Preferences.app` and hope that it has a correct
+    // view of the world.
+    return CFPreferencesGetAppBooleanValue(naturalScrollKey, kCFPreferencesAnyApplication, nil)
+}
+
+func setNaturalScroll(_ naturalScroll: Bool) {
+    let connection = _CGSDefaultConnection()
+    CGSSetSwipeScrollDirection(connection, naturalScroll);
+    CFPreferencesSetAppValue(naturalScrollKey, naturalScroll as CFBoolean, kCFPreferencesAnyApplication);
+    CFPreferencesAppSynchronize(kCFPreferencesAnyApplication);
+    DistributedNotificationCenter.default().postNotificationName(naturalScrollNotification, object: nil)
 }
 
 public struct DeviceSelector: Decodable, Equatable, Hashable {
