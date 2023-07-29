@@ -39,25 +39,23 @@ enum SwitcherooError: CustomStringConvertible, Error {
 // This is static so that it can be used in callbacks passed to unmanaged code.
 let logger = Logger(subsystem: "switcheroo", category: "main")
 
-struct NaturalScroll {
-    static private let key = "com.apple.swipescrolldirection" as CFString
+let naturalScrollKey = "com.apple.swipescrolldirection" as CFString
 
-    static private let notification = NSNotification.Name("SwipeScrollDirectionDidChangeNotification")
+let naturalScrollNotification = NSNotification.Name("SwipeScrollDirectionDidChangeNotification")
 
-    static func get() -> Bool {
-        // I wasn't able to find a getter corresponding to the `CGSSetSwipeScrollDirection` setter,
-        // so let's just read the value from `System Preferences.app` and hope that it has a correct
-        // view of the world.
-        return CFPreferencesGetAppBooleanValue(key, kCFPreferencesAnyApplication, nil)
-    }
+func getNaturalScroll() -> Bool {
+    // I wasn't able to find a getter corresponding to the `CGSSetSwipeScrollDirection` setter,
+    // so let's just read the value from `System Preferences.app` and hope that it has a correct
+    // view of the world.
+    return CFPreferencesGetAppBooleanValue(naturalScrollKey, kCFPreferencesAnyApplication, nil)
+}
 
-    static func set(_ naturalScroll: Bool) {
-        let connection = _CGSDefaultConnection()
-        CGSSetSwipeScrollDirection(connection, naturalScroll);
-        CFPreferencesSetAppValue(key, naturalScroll as CFBoolean, kCFPreferencesAnyApplication);
-        CFPreferencesAppSynchronize(kCFPreferencesAnyApplication);
-        DistributedNotificationCenter.default().postNotificationName(notification, object: nil)
-    }
+func setNaturalScroll(_ naturalScroll: Bool) {
+    let connection = _CGSDefaultConnection()
+    CGSSetSwipeScrollDirection(connection, naturalScroll);
+    CFPreferencesSetAppValue(naturalScrollKey, naturalScroll as CFBoolean, kCFPreferencesAnyApplication);
+    CFPreferencesAppSynchronize(kCFPreferencesAnyApplication);
+    DistributedNotificationCenter.default().postNotificationName(naturalScrollNotification, object: nil)
 }
 
 func createDeviceManager() -> IOHIDManager {
@@ -252,7 +250,7 @@ class Switcheroo {
     init(_ configuration: Configuration) throws {
         inputSources = try getInputSources()
         inputSourceDefault = getActiveInputSource()
-        naturalScrollDefault = NaturalScroll.get()
+        naturalScrollDefault = getNaturalScroll()
         overrides = Overrides(configuration)
         try configuration.validate(Set(inputSources.keys))
     }
@@ -270,10 +268,10 @@ class Switcheroo {
         }
         if let naturalScroll = overrides.getNaturalScroll() {
             logger.info("Setting natural scroll to override: \(naturalScroll)")
-            NaturalScroll.set(naturalScroll)
+            setNaturalScroll(naturalScroll)
         } else {
             logger.info("Setting natural scroll to default: \(self.naturalScrollDefault)")
-            NaturalScroll.set(naturalScrollDefault)
+            setNaturalScroll(naturalScrollDefault)
         }
     }
 
@@ -308,7 +306,7 @@ class Switcheroo {
     private func shutdown() {
         logger.debug("Processing shutdown.")
         setInputSource(inputSourceDefault)
-        NaturalScroll.set(naturalScrollDefault)
+        setNaturalScroll(naturalScrollDefault)
         logger.debug("Processed shutdown.")
         exit(143)
     }
@@ -367,7 +365,7 @@ struct SetInputSource: ParsableCommand {
 
 struct GetNaturalScroll: ParsableCommand {
     func run() {
-        print(NaturalScroll.get())
+        print(getNaturalScroll())
     }
 }
 
@@ -377,7 +375,7 @@ struct SetNaturalScroll: ParsableCommand {
 
     func run() throws {
         if let naturalScroll = Bool(desired) {
-            NaturalScroll.set(naturalScroll)
+            setNaturalScroll(naturalScroll)
         } else {
             throw SwitcherooError.invalidNaturalScrollSetting(desired)
         }
