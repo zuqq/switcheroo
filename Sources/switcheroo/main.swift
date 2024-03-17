@@ -41,13 +41,16 @@ enum SwitcherooError: CustomStringConvertible, Error {
 
 func createDeviceManager() -> IOHIDManager {
     let manager = IOHIDManagerCreate(kCFAllocatorDefault, 0)
-    let filter = [
+    let keyboardFilter = [
         kIOProviderClassKey: kIOHIDDeviceKey,
-        kIOHIDTransportKey: kIOHIDTransportUSBValue,
-        kIOHIDPrimaryUsagePageKey: kHIDPage_GenericDesktop,
         kIOHIDPrimaryUsageKey: kHIDUsage_GD_Keyboard
     ] as [String: Any] as CFDictionary
-    IOHIDManagerSetDeviceMatching(manager, filter)
+    let mouseFilter = [
+        kIOProviderClassKey: kIOHIDDeviceKey,
+        kIOHIDPrimaryUsageKey: kHIDUsage_GD_Mouse
+    ] as [String: Any] as CFDictionary
+    let filters = [keyboardFilter, mouseFilter] as CFArray
+    IOHIDManagerSetDeviceMatchingMultiple(manager, filters)
     return manager
 }
 
