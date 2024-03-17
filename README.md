@@ -29,7 +29,7 @@ scrolling if a device with the name `"HHKB-Classic"` is connected:
             "selector": "HHKB-Classic",
             "rules": {
                 "input_source": "com.apple.keylayout.US",
-                "natural_scroll": false
+                "natural_scrolling": false
             }
         }
     ]

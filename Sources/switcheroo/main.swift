@@ -17,7 +17,7 @@ enum SwitcherooError: CustomStringConvertible, Error {
     case failedToRetrieveInputSources
     case failedToRetrieveActiveInputSource
     case unknownInputSource(ConfigurationEntry, String)
-    case invalidNaturalScrollSetting(String)
+    case invalidNaturalScrollingSetting(String)
 
     public var description: String {
         switch self {
@@ -33,8 +33,8 @@ enum SwitcherooError: CustomStringConvertible, Error {
             return "Failed to retrieve active input source."
         case .unknownInputSource(let entry, let inputSource):
             return "Input source \(inputSource) in this configuration file entry is unknown: \(entry)"
-        case .invalidNaturalScrollSetting(let desired):
-            return "Invalid setting for natural scroll (only `false` and `true` are valid): \(desired)"
+        case .invalidNaturalScrollingSetting(let desired):
+            return "Invalid setting for natural scrolling (only `false` and `true` are valid): \(desired)"
         }
     }
 }
@@ -90,23 +90,23 @@ func setInputSource(_ source: TISInputSource) {
     TISSelectInputSource(source)
 }
 
-let naturalScrollKey = "com.apple.swipescrolldirection" as CFString
+let naturalScrollingKey = "com.apple.swipescrolldirection" as CFString
 
-let naturalScrollNotification = NSNotification.Name("SwipeScrollDirectionDidChangeNotification")
+let naturalScrollingNotification = NSNotification.Name("SwipeScrollDirectionDidChangeNotification")
 
-func getNaturalScroll() -> Bool {
+func getNaturalScrolling() -> Bool {
     // I wasn't able to find a getter corresponding to the `CGSSetSwipeScrollDirection` setter,
     // so let's just read the value from `System Preferences.app` and hope that it has a correct
     // view of the world.
-    return CFPreferencesGetAppBooleanValue(naturalScrollKey, kCFPreferencesAnyApplication, nil)
+    return CFPreferencesGetAppBooleanValue(naturalScrollingKey, kCFPreferencesAnyApplication, nil)
 }
 
-func setNaturalScroll(_ naturalScroll: Bool) {
+func setNaturalScrolling(_ naturalScrolling: Bool) {
     let connection = _CGSDefaultConnection()
-    CGSSetSwipeScrollDirection(connection, naturalScroll);
-    CFPreferencesSetAppValue(naturalScrollKey, naturalScroll as CFBoolean, kCFPreferencesAnyApplication);
+    CGSSetSwipeScrollDirection(connection, naturalScrolling);
+    CFPreferencesSetAppValue(naturalScrollingKey, naturalScrolling as CFBoolean, kCFPreferencesAnyApplication);
     CFPreferencesAppSynchronize(kCFPreferencesAnyApplication);
-    DistributedNotificationCenter.default().postNotificationName(naturalScrollNotification, object: nil)
+    DistributedNotificationCenter.default().postNotificationName(naturalScrollingNotification, object: nil)
 }
 
 public struct DeviceSelector: Decodable, Equatable, Hashable {
@@ -127,11 +127,11 @@ public struct DeviceSelector: Decodable, Equatable, Hashable {
 
 public struct Rules: Decodable, Equatable {
     let inputSource: String?
-    let naturalScroll: Bool?
+    let naturalScrolling: Bool?
 
-    public init(inputSource: String?, naturalScroll: Bool?) {
+    public init(inputSource: String?, naturalScrolling: Bool?) {
         self.inputSource = inputSource
-        self.naturalScroll = naturalScroll
+        self.naturalScrolling = naturalScrolling
     }
 }
 
@@ -168,31 +168,31 @@ struct InputSourceOverride {
     let inputSource: String
 }
 
-struct NaturalScrollOverride {
+struct NaturalScrollingOverride {
     let selector: DeviceSelector
-    let naturalScroll: Bool
+    let naturalScrolling: Bool
 }
 
 public struct Overrides {
     let inputSourceOverrides: [InputSourceOverride]
-    let naturalScrollOverrides: [NaturalScrollOverride]
+    let naturalScrollingOverrides: [NaturalScrollingOverride]
     // Maps each device selector to the set of IDs of all connected devices that it matches.
     var devices: [DeviceSelector: Set<String>] = [:]
 
     public init(_ configuration: Configuration) {
         var inputSourceOverrides: [InputSourceOverride] = []
-        var naturalScrollOverrides: [NaturalScrollOverride] = []
+        var naturalScrollingOverrides: [NaturalScrollingOverride] = []
         for entry in configuration.entries {
             if let inputSource = entry.rules.inputSource {
                 inputSourceOverrides.append(InputSourceOverride(selector: entry.selector, inputSource: inputSource))
             }
-            if let naturalScroll = entry.rules.naturalScroll {
-                naturalScrollOverrides.append(NaturalScrollOverride(selector: entry.selector, naturalScroll: naturalScroll))
+            if let naturalScrolling = entry.rules.naturalScrolling {
+                naturalScrollingOverrides.append(NaturalScrollingOverride(selector: entry.selector, naturalScrolling: naturalScrolling))
             }
             devices[entry.selector] = Set<String>()
         }
         self.inputSourceOverrides = inputSourceOverrides
-        self.naturalScrollOverrides = naturalScrollOverrides
+        self.naturalScrollingOverrides = naturalScrollingOverrides
     }
 
     public mutating func addDevice(_ device: String) {
@@ -228,11 +228,11 @@ public struct Overrides {
         return nil
     }
 
-    public func getNaturalScroll() -> Bool? {
-        for current in naturalScrollOverrides.reversed() {
+    public func getNaturalScrolling() -> Bool? {
+        for current in naturalScrollingOverrides.reversed() {
             if let matches = devices[current.selector] {
                 if !matches.isEmpty {
-                    return current.naturalScroll
+                    return current.naturalScrolling
                 }
             }
         }
@@ -244,13 +244,13 @@ class Switcheroo {
     private let queue = DispatchQueue(label: "switcheroo")
     private let inputSources: [String: TISInputSource]
     private let inputSourceDefault: TISInputSource
-    private let naturalScrollDefault: Bool
+    private let naturalScrollingDefault: Bool
     private var overrides: Overrides
 
     init(_ configuration: Configuration) throws {
         inputSources = try getInputSources()
         inputSourceDefault = getActiveInputSource()
-        naturalScrollDefault = getNaturalScroll()
+        naturalScrollingDefault = getNaturalScrolling()
         overrides = Overrides(configuration)
         try configuration.validate(Set(inputSources.keys))
     }
@@ -266,12 +266,12 @@ class Switcheroo {
             logger.info("Setting input source to default: \(description, privacy: .public)")
             setInputSource(inputSourceDefault)
         }
-        if let naturalScroll = overrides.getNaturalScroll() {
-            logger.info("Setting natural scroll to override: \(naturalScroll)")
-            setNaturalScroll(naturalScroll)
+        if let naturalScrolling = overrides.getNaturalScrolling() {
+            logger.info("Setting natural scrolling to override: \(naturalScrolling)")
+            setNaturalScrolling(naturalScrolling)
         } else {
-            logger.info("Setting natural scroll to default: \(self.naturalScrollDefault)")
-            setNaturalScroll(naturalScrollDefault)
+            logger.info("Setting natural scrolling to default: \(self.naturalScrollingDefault)")
+            setNaturalScrolling(naturalScrollingDefault)
         }
     }
 
@@ -306,7 +306,7 @@ class Switcheroo {
     private func shutdown() {
         logger.debug("Processing shutdown.")
         setInputSource(inputSourceDefault)
-        setNaturalScroll(naturalScrollDefault)
+        setNaturalScrolling(naturalScrollingDefault)
         logger.debug("Processed shutdown.")
         exit(143)
     }
@@ -363,21 +363,21 @@ struct SetInputSource: ParsableCommand {
     }
 }
 
-struct GetNaturalScroll: ParsableCommand {
+struct GetNaturalScrolling: ParsableCommand {
     func run() {
-        print(getNaturalScroll())
+        print(getNaturalScrolling())
     }
 }
 
-struct SetNaturalScroll: ParsableCommand {
-    @Argument(help: "The desired setting for natural scroll (`false` or `true`).")
+struct SetNaturalScrolling: ParsableCommand {
+    @Argument(help: "The desired setting for natural scrolling (`false` or `true`).")
     var desired: String
 
     func run() throws {
-        if let naturalScroll = Bool(desired) {
-            setNaturalScroll(naturalScroll)
+        if let naturalScrolling = Bool(desired) {
+            setNaturalScrolling(naturalScrolling)
         } else {
-            throw SwitcherooError.invalidNaturalScrollSetting(desired)
+            throw SwitcherooError.invalidNaturalScrollingSetting(desired)
         }
     }
 }
@@ -431,8 +431,8 @@ struct SwitcherooCommand: ParsableCommand {
             ListInputSources.self,
             GetInputSource.self,
             SetInputSource.self,
-            GetNaturalScroll.self,
-            SetNaturalScroll.self
+            GetNaturalScrolling.self,
+            SetNaturalScrolling.self
         ]
     )
 
