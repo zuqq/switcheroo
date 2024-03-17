@@ -18,9 +18,10 @@ Alternatively, clone this Git repository and run `swift build`.
 ## Example
 
 Switcheroo's configuration file resides at `~/.switcheroo.json` and adheres to a
-simple, JSON-based format. For example, here is a configuration file with a
-single entry that automatically switches to a US keyboard layout and no natural
-scrolling if a device with the name `"HHKB-Classic"` is connected:
+simple, JSON-based format. For example, here is a configuration file that
+instructs Switcheroo to switch to a US keyboard layout if `"HHKB-Classic"` is
+connected and to turn off natural scrolling if `"SteelSeries Rival 3"` is
+connected:
 
 ```json
 {
@@ -28,7 +29,12 @@ scrolling if a device with the name `"HHKB-Classic"` is connected:
         {
             "selector": "HHKB-Classic",
             "rules": {
-                "input_source": "com.apple.keylayout.US",
+                "input_source": "com.apple.keylayout.US"
+            }
+        },
+        {
+            "selector": "SteelSeries Rival 3",
+            "rules": {
                 "natural_scrolling": false
             }
         }
@@ -36,8 +42,7 @@ scrolling if a device with the name `"HHKB-Classic"` is connected:
 }
 ```
 
-Such a configuration file may have multiple entries, in which case later
-entries take precedence over earlier ones.
+Later entries take precedence over earlier ones if there are conflicts.
 
 Run `switcheroo list-devices` and `switcheroo list-input-sources` to determine
 possible values for the keys `"selector"` and `"input_source"`.
